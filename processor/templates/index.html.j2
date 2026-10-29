@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; padding: 24px 16px 48px; background: #f9f9f7; color: #0b0b0b;
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 10px; padding-top: 8px; border-top: 1px solid #e1e0d9; }
+  h3 { font-size: 1rem; margin: 22px 0 6px; }
+  .sub { color: #52514e; margin: 0 0 14px; }
+  .muted { color: #898781; }
+  nav { font-size: 14px; margin: 10px 0 18px; }
+  nav a { margin-right: 14px; white-space: nowrap; }
+  .card { background: #fcfcfb; border: 1px solid rgba(11,11,11,0.10); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  ul.obs { margin: 6px 0; padding-left: 20px; } ul.obs li { margin: 3px 0; }
+  .caveats { background: #fff7df; border: 1px solid #fab219; border-radius: 6px; padding: 8px 12px; font-size: 14px; margin: 10px 0; }
+  .caveats strong { display: block; margin-bottom: 2px; }
+  .caveats ul { margin: 4px 0; padding-left: 20px; }
+  .error { background: #fbe3e3; border: 1px solid #d03b3b; border-radius: 6px; padding: 8px 12px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #e1e0d9; vertical-align: top; }
+  th { color: #52514e; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .flag { display: inline-block; padding: 0 7px; border-radius: 10px; font-size: 12px; white-space: nowrap;
+          background: #fbe3e3; color: #7a1f1f; border: 1px solid #d03b3b; }
+  .flag::before { content: "\25B2 "; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; background: #e1e0d9; color: #0b0b0b; }
+  .up { color: #1c5cab; } .down { color: #a33b13; }
+  figure { margin: 14px 0; }
+  figure img { max-width: 100%; height: auto; display: block; background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; }
+  figcaption { color: #52514e; font-size: 13px; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font-size: 14px; }
+  .kv dt { color: #52514e; } .kv dd { margin: 0; }
+  .small { font-size: 12.5px; }
+  details summary { cursor: pointer; color: #1c5cab; }
+  code { font-size: 12.5px; background: #f0efec; padding: 0 3px; border-radius: 3px; word-break: break-word; }
+  a { color: #1c5cab; }
+  footer { margin-top: 40px; color: #898781; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+<h1>{{ title }}</h1>
+<p class="sub">
+  {% if workflows %}{{ workflows | join(" · ") }}. {% endif %}
+  {% if ov and ov.n_samples is defined %}{{ ov.n_samples }} samples{% if ov.batches %}, {{ ov.batches | length }} batches{% endif %}{% if ov.conditions and ov.conditions | length > 1 %}, conditions {{ ov.conditions | join(", ") }}{% endif %}. {% endif %}
+  Generated {{ generated_at }}.
+</p>
+<nav>
+  {% if ov %}<a href="#overview">Overview</a>{% endif %}
+  {% if qc %}<a href="#qc">QC</a>{% endif %}
+  {% if pop %}<a href="#populations">Populations</a>{% endif %}
+  {% if da %}<a href="#da">Differential abundance</a>{% endif %}
+  {% if ds %}<a href="#ds">Differential state</a>{% endif %}
+  {% if batch %}<a href="#batch">Batch effects</a>{% endif %}
+  <a href="#methods">Methods &amp; citations</a>
+  <a href="#data">Input data</a>
+</nav>
+
+{% macro observations(sec) %}
+{% if sec.observations %}<ul class="obs">{% for o in sec.observations %}<li>{{ o }}</li>{% endfor %}</ul>{% endif %}
+{% endmacro %}
+{% macro caveats(sec) %}
+{% if sec.caveats %}<div class="caveats"><strong>Keep in mind</strong><ul>{% for c in sec.caveats %}<li>{{ c }}</li>{% endfor %}</ul></div>{% endif %}
+{% endmacro %}
+
+{% if errors %}
+<div class="error"><strong>Some sections could not be rendered</strong> (their inputs were present but unreadable):
+<ul>{% for e in errors %}<li>{{ e.section }}: {{ e.error }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+{% if not (ov or qc or pop or da or ds or batch) %}
+<p class="card">No section had its inputs; see Methods for the provenance files that were found.</p>
+{% endif %}
+
+{# ------------------------------------------------------------------ overview #}
+{% if ov %}
+<h2 id="overview">Overview</h2>
+{{ observations(ov) }}
+{{ caveats(ov) }}
+{% if ov.design is defined %}
+<h3>Samples per batch × condition</h3>
+<div class="wrap"><table style="width:auto">
+  <tr><th>batch</th>{% for c in ov.design.columns %}<th class="num">{{ c }}</th>{% endfor %}<th class="num">total</th></tr>
+  {% for r in ov.design.rows %}<tr><td>{{ r.batch }}</td>{% for n in r.counts %}<td class="num">{% if n == 0 %}<span class="flag">0</span>{% else %}{{ n }}{% endif %}</td>{% endfor %}<td class="num">{{ r.total }}</td></tr>{% endfor %}
+  <tr><th>total</th>{% for n in ov.design.totals %}<th class="num">{{ n }}</th>{% endfor %}<th class="num">{{ ov.design.total }}</th></tr>
+</table></div>
+{% endif %}
+{% if ov.samples is defined %}
+<details><summary>All {{ ov.samples | length }} samples</summary>
+<div class="wrap"><table>
+  <tr><th>sample</th><th>file</th><th>batch</th><th>condition</th>{% for c in ov.extra_columns %}<th>{{ c }}</th>{% endfor %}<th class="num">events</th></tr>
+  {% for s in ov.samples %}<tr><td>{{ s.sample_id }}</td><td class="small">{{ s.file if s.file is defined else "" }}</td><td>{{ s.batch if s.batch is defined else "" }}</td><td>{{ s.condition if s.condition is defined else "" }}</td>{% for c in ov.extra_columns %}<td>{{ s[c] }}</td>{% endfor %}<td class="num">{{ s.n_events | count if s.n_events is defined else "–" }}</td></tr>{% endfor %}
+</table></div></details>
+{% endif %}
+{% if ov.panel is defined %}
+<h3>Panel</h3>
+<p class="small muted">{% if ov.cytometer %}{{ ov.cytometer }} cytometer{% if ov.instruments %} ({{ ov.instruments | join(", ") }}){% endif %}. {% endif %}Clustering markers define the populations; state markers are tested for differential expression within them.</p>
+<div class="wrap"><table>
+  <tr><th>marker</th><th>channel</th><th>clustering</th><th>state</th><th class="num">cofactor</th></tr>
+  {% for r in ov.panel %}<tr><td><strong>{{ r.marker }}</strong></td><td class="small">{{ r.channel }}</td><td>{% if r.clustering %}<span class="tag">clustering</span>{% endif %}</td><td>{% if r.state %}<span class="tag">state</span>{% endif %}</td><td class="num">{{ r.cofactor }}</td></tr>{% endfor %}
+</table></div>
+{% if ov.other_channels %}<p class="small muted">Also kept, not transformed: {{ ov.other_channels | join(", ") }}.</p>{% endif %}
+{% endif %}
+{% if ov.dropped %}
+<h3>Dropped channels</h3>
+<table><tr><th>channel</th><th>marker</th><th>reason</th></tr>
+{% for d in ov.dropped %}<tr><td>{{ d.channel }}</td><td>{{ d.marker }}</td><td>{{ d.reason }}</td></tr>{% endfor %}</table>
+{% endif %}
+{% endif %}
+
+{# ------------------------------------------------------------------ QC #}
+{% if qc %}
+<h2 id="qc">Quality control</h2>
+{{ observations(qc) }}
+{{ caveats(qc) }}
+{% if figs.qc %}<figure><img src="figures/{{ figs.qc }}" alt="Percentage of events removed per sample"><figcaption>Events removed per sample; ▲ red = flagged by PeacoQC.</figcaption></figure>{% endif %}
+<details><summary>Events per sample</summary>
+<div class="wrap"><table>
+  <tr><th>sample</th><th>batch</th><th>condition</th><th class="num">acquired</th>
+    {% if qc.peacoqc is defined %}<th class="num">after PeacoQC</th><th class="num">removed</th><th></th>{% endif %}
+    {% if qc.doublets is defined %}<th class="num">doublets</th><th class="num">after Cleanet</th>{% endif %}
+    <th class="num">kept</th><th>notes</th></tr>
+  {% for r in qc.rows %}<tr>
+    <td>{{ r.sample_id }}</td><td>{{ r.batch if r.batch is defined else "" }}</td><td>{{ r.condition if r.condition is defined else "" }}</td>
+    <td class="num">{{ (r.n_events if r.n_events is defined else (r.qc_in if r.qc_in is defined else none)) | count }}</td>
+    {% if qc.peacoqc is defined %}<td class="num">{{ (r.qc_out if r.qc_out is defined else none) | count }}</td><td class="num">{{ (r.qc_pct if r.qc_pct is defined else none) | pctv }}</td><td>{% if r.qc_flagged is defined and r.qc_flagged %}<span class="flag">flagged</span>{% endif %}</td>{% endif %}
+    {% if qc.doublets is defined %}<td class="num">{{ (r.db_pct if r.db_pct is defined else none) | pctv(2) }}</td><td class="num">{{ (r.db_out if r.db_out is defined else none) | count }}</td>{% endif %}
+    <td class="num">{{ (r.kept_pct if r.kept_pct is defined else none) | pctv }}</td>
+    <td class="small">{{ r.qc_notes if r.qc_notes is defined else "" }}{% if r.db_notes is defined and r.db_notes %} {{ r.db_notes }}{% endif %}</td>
+  </tr>{% endfor %}
+</table></div></details>
+{% if qc.plots %}
+<h3>Flagged files</h3>
+<div class="grid">{% for sid, f in qc.plots %}{% if f %}<figure><img src="figures/{{ f }}" alt="PeacoQC plot of {{ sid }}"><figcaption>PeacoQC: {{ sid }}</figcaption></figure>{% endif %}{% endfor %}</div>
+{% endif %}
+{% endif %}
+
+{# ------------------------------------------------------------------ populations #}
+{% if pop %}
+<h2 id="populations">Populations</h2>
+{{ observations(pop) }}
+{{ caveats(pop) }}
+{% if figs.heatmap %}<figure><img src="figures/{{ figs.heatmap }}" alt="Median marker expression per metacluster"><figcaption>Median arcsinh expression per metacluster, scaled 0–1 per marker across metaclusters (as the labelling rules see it). Bold markers were used for clustering; those right of the line were not.</figcaption></figure>{% endif %}
+{% if pop.metaclusters %}
+<details><summary>Labelled metaclusters ({{ pop.metaclusters | length }})</summary>
+<div class="wrap"><table>
+  <tr><th>MC</th><th>label</th><th class="num">cells</th><th class="num">% of cells</th><th>marker profile</th></tr>
+  {% for r in pop.metaclusters %}<tr><td>{{ r.metacluster }}</td><td>{{ r.label }}</td><td class="num">{{ r.n_cells | count }}</td><td class="num">{{ r.frac | pct }}</td><td class="small">{{ r.profile if r.profile == r.profile else "" }}</td></tr>{% endfor %}
+</table></div></details>
+{% endif %}
+{% if figs.composition %}<figure><img src="figures/{{ figs.composition }}" alt="Composition per sample"><figcaption>Share of each label in each sample (labels summed over their metaclusters; the seven largest shown, the rest as Other). Full table: tables/composition.csv.</figcaption></figure>{% endif %}
+{% if pop.composition_means is defined and pop.composition_means %}
+<details><summary>Mean composition per condition</summary>
+<table style="width:auto"><tr><th>label</th>{% for c in pop.composition_means.conditions %}<th class="num">{{ c }}</th>{% endfor %}</tr>
+{% for r in pop.composition_means.rows %}<tr><td>{{ r.label }}</td>{% for m in r.means %}<td class="num">{{ m | pct }}</td>{% endfor %}</tr>{% endfor %}</table>
+</details>
+{% endif %}
+{% if figs.umap %}
+<h3>UMAP</h3>
+{% if pop.umap_note is defined %}<p class="small muted">{{ pop.umap_note }}</p>{% endif %}
+<div class="grid">{% for name, f in figs.umap %}{% if f %}<figure><img src="figures/{{ f }}" alt="UMAP {{ name }}"><figcaption>UMAP {{ name }}</figcaption></figure>{% endif %}{% endfor %}</div>
+{% endif %}
+{% if figs.star_tree %}<details><summary>FlowSOM star tree</summary><figure><img src="figures/{{ figs.star_tree }}" alt="FlowSOM star tree"></figure></details>{% endif %}
+{% endif %}
+
+{# ------------------------------------------------------------------ DA #}
+{% if da %}
+<h2 id="da">Differential abundance</h2>
+{% if da.failed %}<p class="error">{{ da.failed }}</p>{% else %}
+<p class="small muted">diffcyt {{ da.method or "" }}{% if da.block %}, {{ da.block }} as a blocking factor{% endif %}; significant at FDR &lt; {{ da.fdr }}{% if fdr_override %} (set by this report's FDR parameter){% endif %}.</p>
+{{ observations(da) }}
+{{ caveats(da) }}
+{% for c in da.comparisons %}
+<h3>{{ c.comparison }}</h3>
+{% if c.significant %}
+<div class="wrap"><table>
+  <tr><th>MC</th><th>label</th><th class="num">{{ c.reference }}</th><th class="num">{{ c.level }}</th><th class="num">log2FC</th><th class="num">FDR</th><th class="num">batches agreeing</th><th>notes</th></tr>
+  {% for r in c.significant %}<tr>
+    <td>{{ r.metacluster }}</td><td>{{ r.label }}</td>
+    <td class="num">{{ r.frac_ref | pct }}</td><td class="num">{{ r.frac_level | pct }}</td>
+    <td class="num {{ 'up' if r.logFC > 0 else 'down' }}">{{ r.logFC | num(2, true) }}</td><td class="num">{{ r.p_adj | pval }}</td>
+    <td class="num">{% if r.consistency %}{{ r.consistency.agree }}/{{ r.consistency.n_batches }}{% else %}–{% endif %}</td>
+    <td class="small">{% for n in r.notes %}<span class="flag">{{ n }}</span> {% endfor %}</td>
+  </tr>{% endfor %}
+</table></div>
+<p class="small muted">Percentages: mean share of cells over the samples of each condition. Batches agreeing: batches whose {{ c.level }} − {{ c.reference }} difference has the same sign as the overall one.</p>
+{% if c.figure %}<figure><img src="figures/{{ c.figure }}" alt="Proportions of significant metaclusters per sample"><figcaption>One point per sample; the bar is the condition mean; grey lines join each batch's means, so a line going the other way is a batch that disagrees.</figcaption></figure>{% endif %}
+{% else %}<p>No metacluster differs at FDR &lt; {{ da.fdr }}.</p>{% endif %}
+{% endfor %}
+{% if figs.volcano %}<details><summary>Volcano plot (diffcyt)</summary><figure><img src="figures/{{ figs.volcano }}" alt="Volcano plot"></figure></details>{% endif %}
+{% endif %}
+{% endif %}
+
+{# ------------------------------------------------------------------ DS #}
+{% if ds %}
+<h2 id="ds">Differential state</h2>
+{% if ds.failed %}<p class="error">{{ ds.failed }}</p>{% else %}
+<p class="small muted">diffcyt {{ ds.method or "" }} on per-sample median expression of the state markers within each metacluster; significant at FDR &lt; {{ ds.fdr }}.</p>
+{{ observations(ds) }}
+{{ caveats(ds) }}
+{% for c in ds.comparisons %}
+<h3>{{ c.comparison }}: largest shifts among significant pairs</h3>
+{% if c.top_effect %}
+<div class="wrap"><table>
+  <tr><th>marker</th><th>MC</th><th>label</th><th class="num">{{ c.reference }}</th><th class="num">{{ c.level }}</th><th class="num">difference</th><th class="num">FDR</th></tr>
+  {% for r in c.top_effect %}<tr><td><strong>{{ r.marker }}</strong></td><td>{{ r.metacluster }}</td><td>{{ r.label }}</td><td class="num">{{ r.ref | num }}</td><td class="num">{{ r.level | num }}</td><td class="num {{ 'up' if r.logFC > 0 else 'down' }}">{{ r.logFC | num(2, true) }}</td><td class="num">{{ r.p_adj | pval }}</td></tr>{% endfor %}
+</table></div>
+<details><summary>Ranked by FDR instead</summary>
+<div class="wrap"><table>
+  <tr><th>marker</th><th>MC</th><th>label</th><th class="num">{{ c.reference }}</th><th class="num">{{ c.level }}</th><th class="num">difference</th><th class="num">FDR</th></tr>
+  {% for r in c.top_p %}<tr><td><strong>{{ r.marker }}</strong></td><td>{{ r.metacluster }}</td><td>{{ r.label }}</td><td class="num">{{ r.ref | num }}</td><td class="num">{{ r.level | num }}</td><td class="num {{ 'up' if r.logFC > 0 else 'down' }}">{{ r.logFC | num(2, true) }}</td><td class="num">{{ r.p_adj | pval }}</td></tr>{% endfor %}
+</table></div></details>
+<p class="small muted">Values: mean over samples of the per-sample median (arcsinh scale). Significant clusters per marker: {% for m in c.per_marker %}{{ m.marker }} {{ m.n }}{{ ", " if not loop.last }}{% endfor %}.</p>
+{% else %}<p>No cluster × marker pair differs at FDR &lt; {{ ds.fdr }}.</p>{% endif %}
+{% endfor %}
+{% if ds.figure_files %}<div class="grid">{% for f in ds.figure_files %}{% if f %}<figure><img src="figures/{{ f }}" alt="diffcyt differential state figure"><figcaption>From diffcyt: {{ "metacluster × marker differences, significant pairs ringed" if "logfc" in f else "significant pairs per sample, z-scored" }}.</figcaption></figure>{% endif %}{% endfor %}</div>{% endif %}
+{% endif %}
+{% endif %}
+
+{# ------------------------------------------------------------------ batch #}
+{% if batch %}
+<h2 id="batch">Batch effects</h2>
+{% if batch.runs %}<p class="small muted">Earth mover's distance (EMD) between each batch's marker distributions and the pooled others, from batch-assess; 0 = identical distributions. One assessment per data version: {{ batch.labels | join(", ") }}.</p>{% endif %}
+{{ observations(batch) }}
+{{ caveats(batch) }}
+{% if batch.runs %}
+<h3>Before and after correction</h3>
+<div class="wrap"><table>
+  <tr><th>data</th><th class="num">median EMD, reference</th><th class="num">flagged</th><th class="num">median EMD, batch vs batch</th><th class="num">flagged</th><th>flagged batches</th></tr>
+  {% for r in batch.runs %}<tr><td><strong>{{ r.label }}</strong>{% if batch.best is defined and batch.best == r.label %} <span class="tag">lowest</span>{% endif %}</td>
+    <td class="num">{{ r.ref_median | num(3) }}</td><td class="num">{{ r.ref_flagged if r.ref_flagged is not none else "–" }}</td>
+    <td class="num">{{ r.bat_median | num(3) }}</td><td class="num">{{ r.bat_flagged if r.bat_flagged is not none else "–" }}</td>
+    <td>{% for b in r.flagged_batches %}<span class="flag">{{ b }}</span> {% endfor %}</td></tr>{% endfor %}
+</table></div>
+<p class="small muted">Reference: each batch's reference sample{% if batch.runs[0].reference and batch.runs[0].reference["values"] %} ({{ batch.runs[0].reference.column }} = {{ batch.runs[0].reference["values"] | join(", ") }}){% endif %} against the pooled reference samples. Batch vs batch: each batch against the other batches within a condition. Flagged: batch × marker cells above that run's own threshold.</p>
+{% if batch.by_condition and batch.by_condition | length > 1 %}
+<table style="width:auto"><tr><th>batch vs batch, median EMD</th>{% for l in batch.labels %}<th class="num">{{ l }}</th>{% endfor %}</tr>
+{% for r in batch.by_condition %}<tr><td>within {{ r.condition }}</td>{% for v in r.cells %}<td class="num">{{ v | num(3) }}</td>{% endfor %}</tr>{% endfor %}</table>
+{% endif %}
+{% if figs.batch_scores %}<figure><img src="figures/{{ figs.batch_scores }}" alt="Per-batch scores per data version"><figcaption>Per-batch score (mean EMD over markers{% if batch.runs[0].median_emd_source %}, {{ batch.runs[0].median_emd_source }} comparison{% endif %}) for each data version, on one axis.</figcaption></figure>{% endif %}
+<div class="wrap"><table>
+  <tr><th>batch</th>{% for l in batch.labels %}<th class="num">{{ l }}</th>{% endfor %}<th>flagged markers ({{ batch.labels | last }})</th></tr>
+  {% for r in batch.score_rows %}<tr><td>{{ r.batch }}</td>{% for c in r.cells %}<td class="num">{% if c %}{{ c.score | num(3) }}{% if c.flagged %} <span class="flag">flagged</span>{% endif %}{% else %}–{% endif %}</td>{% endfor %}<td class="small">{% set last = r.cells | last %}{{ last.flagged_markers | join(", ") if last else "" }}</td></tr>{% endfor %}
+</table></div>
+{% if figs.batch_emd %}<figure><img src="figures/{{ figs.batch_emd }}" alt="EMD per batch and marker for each data version"><figcaption>EMD per batch and marker ({{ "reference comparison" if batch.heatmap_comparison == "reference" else "batch vs batch, mean over conditions" }}), one colour scale for all data versions; red outline = flagged in that run. Markers ordered by the first version's mean EMD.</figcaption></figure>{% endif %}
+{% endif %}
+{% for n in batch.normalization %}
+<h3>{{ n.method }}: method diagnostics</h3>
+{% if n.notes %}<ul class="obs">{% for t in n.notes %}<li>{{ t }}</li>{% endfor %}</ul>{% endif %}
+{% if n.groups is defined %}
+<table style="width:auto"><tr><th>replicate</th><th>role</th><th class="num">spread before</th><th class="num">after</th><th class="num">reduction</th></tr>
+{% for r in n.groups %}<tr><td>{{ r.group }}</td><td>{{ r.role }}</td><td class="num">{{ r.before | num(3) }}</td><td class="num">{{ r.after | num(3) }}</td><td class="num">{{ r.reduction | pct(0) }}</td></tr>{% endfor %}</table>
+<p class="small muted">Spread: {{ n.spread_source }}. Training = the references CytoNorm learned from; held-out = samples present in several batches that it never saw.</p>
+{% endif %}
+{% if n.by_marker is defined %}
+<details><summary>Per marker</summary>
+<table style="width:auto"><tr><th>marker</th><th class="num">{{ n.by_marker_columns[0] }}</th><th class="num">{{ n.by_marker_columns[1] }}</th><th class="num">reduction</th></tr>
+{% for r in n.by_marker %}<tr><td>{{ r.marker }}</td><td class="num">{{ r.before | num(3) }}</td><td class="num">{{ r.after | num(3) }}</td><td class="num">{{ r.reduction | pct(0) if r.reduction == r.reduction else "–" }}</td></tr>{% endfor %}</table>
+</details>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{# ------------------------------------------------------------------ methods #}
+<h2 id="methods">Methods &amp; citations</h2>
+<p class="small muted">From the provenance.json files among the inputs: each step's version, tool versions and parameters, and the papers it rests on.</p>
+{% for g in methods.apps %}
+<div class="card">
+  <h3 style="margin-top:0">{{ g.step or g.app }} <span class="muted small">{{ g.app }}</span></h3>
+  {% for r in g.runs %}
+  <dl class="kv small">
+    <dt>version</dt><dd>{{ r.version or "–" }}</dd>
+    {% if r.tools_text %}<dt>tools</dt><dd>{{ r.tools_text }}</dd>{% endif %}
+    {% if r.parameters_text %}<dt>parameters</dt><dd><code>{{ r.parameters_text }}</code></dd>{% endif %}
+    {% if r.method %}<dt>method</dt><dd>{{ r.method }}</dd>{% endif %}
+    {% if r.files %}<dt>provenance</dt><dd class="muted">{{ r.files | join(", ") }}</dd>{% endif %}
+  </dl>
+  {% if not loop.last %}<hr style="border:0;border-top:1px dashed #e1e0d9">{% endif %}
+  {% endfor %}
+  {% if g.citations %}
+  <ol class="small">{% for c in g.citations %}<li>{{ c.authors }} {{ c.title }}. <em>{{ c.journal }}</em> {{ c.year }}{% if c.where %};{{ c.where }}{% endif %}. <a href="{{ c.url }}">doi:{{ c.doi }}</a>{% if c.pmid %}, PMID {{ c.pmid }}{% endif %}.</li>{% endfor %}</ol>
+  {% else %}<p class="small muted">No citations on record for this app.</p>{% endif %}
+</div>
+{% endfor %}
+
+{# ------------------------------------------------------------------ data #}
+<h2 id="data">Input data</h2>
+{% if credit.demo %}
+<div class="card">
+  <p><strong>Data credit.</strong> This analysis uses the demo dataset {{ credit.demo.citation }} <a href="https://doi.org/{{ credit.demo.doi }}">doi:{{ credit.demo.doi }}</a>, licensed {{ credit.demo.licence }}.</p>
+  <p class="small muted">{{ credit.demo.description }} {{ credit.n_demo }} of its files are among the inputs.</p>
+</div>
+{% endif %}
+{% if credit.n_files %}
+<p>{{ credit.n_files }} FCS file(s){% if credit.sample_sheet %}, sample sheet <code>{{ credit.sample_sheet }}</code>{% endif %}.</p>
+<details><summary>File names</summary><p class="small">{{ credit.files | join(", ") }}</p></details>
+{% else %}
+<p class="muted">The original input files are not known: no fcs-prep provenance or sample sheet among the inputs.</p>
+{% endif %}
+
+<footer>
+  Generated {{ generated_at }} by processor-cytometry-report {{ app_version }} (pandas {{ tools.pandas }}, matplotlib {{ tools.matplotlib }}).
+  Observations are drawn from the upstream outputs and describe the data; they are not clinical findings.
+</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://schemas.pennsieve.io/app-manifest/v1.json
+schemaVersion: "1.0"
+application:
+  name: Immune Cytometry Report
+  description: >-
+    The last step of both immune cytometry workflows (Immune Profiling & Differential Abundance;
+    Multi-batch Harmonization & QC). It reads whatever upstream outputs it is given (fcs-prep
+    metadata, PeacoQC and Cleanet QC, FlowSOM clusters, UMAP figures, diffcyt DA/DS results,
+    batch-assess runs before and after CytoNorm/cyCombine, their method diagnostics) and writes
+    one offline HTML report an immunologist can read: study design and panel, QC, labelled
+    populations and composition, differential abundance and state with per-batch consistency,
+    batch effects before and after correction on one scale, and methods with versions,
+    parameters and citations from every step's provenance; plus summary tables. The text states
+    observations from the data and the caveats that come with them (heuristic labels, results
+    carried by one batch, donors confounded with conditions). Every input is optional.
+  type: processor
+  tags:
+    - cytometry
+    - flow-cytometry
+    - report
+    - differential-abundance
+    - batch-effects
+runtime:
+  cpu: 1024
+  memory: 2048
+  # standard (ECS) by default; a workflow can run this light step as a Lambda function instead
+  # (the image serves both, see processor/entry.py). Measured on the 24-file demo study with all
+  # inputs: 166 MB peak, 5-6 s (amd64 emulation on an M-series Mac).
+  computeTypes:
+    - standard
+    - lambda
+  timeoutSeconds: 600
+parameters:
+  - name: REPORT_TITLE
+    type: string
+    description: Title of the report page.
+    defaultValue: "Immune Cytometry Report"
+  - name: FDR
+    type: string
+    description: >-
+      False discovery rate for what the report counts and lists as significant (differential
+      abundance and state), e.g. 0.01. Empty: the threshold diffcyt used (its FDR parameter).
+      Display only; diffcyt's own tables are not changed.
+    defaultValue: ""
+# Each input in its own folder (placement: subfolder) when linked; without links the files are
+# found by name anywhere under INPUT_DIR. Several links may feed assessment and normalization:
+# their folders (raw/, cytonorm/, cycombine/) arrive side by side.
+inputs:
+  - name: metadata
+    description: fcs-prep metadata (samples.csv, panel.csv, prep.json, provenance.json); study design, panel, dropped channels, input files.
+    mediaTypes: [text/csv, application/json]
+    placement: subfolder
+    required: false
+  - name: qc
+    description: PeacoQC qc output (peacoqc.csv, plots/<sample_id>.png, provenance.json); events removed and flagged files.
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: doublets
+    description: Cleanet qc output (doublets.csv, plots/, provenance.json); doublets called per sample.
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: clusters
+    description: FlowSOM clusters output (counts.csv, labels.csv, medians.csv, star_tree.png, provenance.json); populations and composition.
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: embedding
+    description: UMAP output (umap_*.png, provenance.json); the figures are shown as they are.
+    mediaTypes: [image/png, application/gzip, application/json]
+    placement: subfolder
+    required: false
+  - name: da
+    description: diffcyt differential abundance output (da.csv, summary.json, volcano.png, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: ds
+    description: diffcyt differential state output (ds.csv, summary.json, logfc.png, heatmap.png, provenance.json).
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: assessment
+    description: >-
+      batch-assess outputs, one <LABEL>/ folder each (summary.json, emd_reference.csv,
+      emd_batches.csv, flags.csv); link the raw, cytonorm and cycombine runs to compare them.
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+  - name: normalization
+    description: >-
+      Method diagnostics of cytonorm and/or cycombine (their qc outputs, in cytonorm/ and
+      cycombine/ folders, or one of them at the root): replicate spread, metacluster CVs,
+      cyCombine's EMD/MAD evaluation.
+    mediaTypes: [text/csv, image/png, application/json]
+    placement: subfolder
+    required: false
+# Two outputs: each is written to its own folder, OUTPUT_DIR/<name>/.
+outputs:
+  - name: report
+    description: >-
+      index.html with figures/*.png and provenance.json. Self-contained: no scripts, no external
+      resources; open index.html from the folder.
+    mediaTypes: [text/html, image/png, application/json]
+  - name: tables
+    description: >-
+      composition.csv (sample x label fractions with batch and condition), da_significant.csv,
+      batch_scores.csv (per batch and LABEL), qc.csv (events per sample through QC), metrics.json
+      (every number and sentence of the report), provenance.json.
+    mediaTypes: [text/csv, application/json]

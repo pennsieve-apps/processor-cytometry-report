@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Immune Cytometry Report</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; padding: 24px 16px 48px; background: #f9f9f7; color: #0b0b0b;
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 10px; padding-top: 8px; border-top: 1px solid #e1e0d9; }
+  h3 { font-size: 1rem; margin: 22px 0 6px; }
+  .sub { color: #52514e; margin: 0 0 14px; }
+  .muted { color: #898781; }
+  nav { font-size: 14px; margin: 10px 0 18px; }
+  nav a { margin-right: 14px; white-space: nowrap; }
+  .card { background: #fcfcfb; border: 1px solid rgba(11,11,11,0.10); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  ul.obs { margin: 6px 0; padding-left: 20px; } ul.obs li { margin: 3px 0; }
+  .caveats { background: #fff7df; border: 1px solid #fab219; border-radius: 6px; padding: 8px 12px; font-size: 14px; margin: 10px 0; }
+  .caveats strong { display: block; margin-bottom: 2px; }
+  .caveats ul { margin: 4px 0; padding-left: 20px; }
+  .error { background: #fbe3e3; border: 1px solid #d03b3b; border-radius: 6px; padding: 8px 12px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #e1e0d9; vertical-align: top; }
+  th { color: #52514e; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .wrap { overflow-x: auto; }
+  .flag { display: inline-block; padding: 0 7px; border-radius: 10px; font-size: 12px; white-space: nowrap;
+          background: #fbe3e3; color: #7a1f1f; border: 1px solid #d03b3b; }
+  .flag::before { content: "\25B2 "; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 12px; background: #e1e0d9; color: #0b0b0b; }
+  .up { color: #1c5cab; } .down { color: #a33b13; }
+  figure { margin: 14px 0; }
+  figure img { max-width: 100%; height: auto; display: block; background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; }
+  figcaption { color: #52514e; font-size: 13px; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font-size: 14px; }
+  .kv dt { color: #52514e; } .kv dd { margin: 0; }
+  .small { font-size: 12.5px; }
+  details summary { cursor: pointer; color: #1c5cab; }
+  code { font-size: 12.5px; background: #f0efec; padding: 0 3px; border-radius: 3px; word-break: break-word; }
+  a { color: #1c5cab; }
+  footer { margin-top: 40px; color: #898781; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+<h1>Immune Cytometry Report</h1>
+<p class="sub">
+Immune Profiling &amp; Differential Abundance · Multi-batch Harmonization &amp; QC. 12 samples, 3 batches, conditions unstim, stim.   Generated 2026-01-02T03:04:05+00:00.
+</p>
+<nav>
+<a href="#overview">Overview</a><a href="#qc">QC</a><a href="#populations">Populations</a><a href="#da">Differential abundance</a><a href="#ds">Differential state</a><a href="#batch">Batch effects</a>  <a href="#methods">Methods &amp; citations</a>
+  <a href="#data">Input data</a>
+</nav>
+
+
+
+
+<h2 id="overview">Overview</h2>
+<ul class="obs"><li>12 samples in 3 batches; every batch holds every condition (6 unstim and 6 stim), so condition and batch are not confounded.</li><li>334,000 events in all; per sample median 30,000 (range 4,000–30,000).</li><li>7 markers kept (5 used for clustering, 2 state markers; arcsinh cofactor 6000), plus 1 scatter/time/other channels.</li><li>1 channel(s) dropped because the panel differs between samples: CH9-A (CD28).</li><li>Donors (from the &#39;donor&#39; column of samples.csv): unstim: donor D1 in every batch; stim: donor D2 (b1, b2) and donor D3 (b3).</li></ul>
+<div class="caveats"><strong>Keep in mind</strong><ul><li>b1_unstim1 (4,000 events) has fewer than a fifth of the median events per sample; proportions of rare populations in it rest on few cells.</li><li>No donor appears in more than one condition, so every difference between conditions is also a difference between donors; the data cannot separate the two.</li><li>Samples within a condition are repeated measurements of few donors (6 unstim samples from 1 donor and 6 stim samples from 2 donors). Tests that treat each sample as an independent replicate measure reproducibility across batches and aliquots, not variation between people.</li><li>In stim samples the donor changes with the batch, so a batch difference there is partly a donor difference.</li></ul></div>
+<h3>Samples per batch × condition</h3>
+<div class="wrap"><table style="width:auto">
+  <tr><th>batch</th><th class="num">unstim</th><th class="num">stim</th><th class="num">total</th></tr>
+<tr><td>b1</td><td class="num">2</td><td class="num">2</td><td class="num">4</td></tr><tr><td>b2</td><td class="num">2</td><td class="num">2</td><td class="num">4</td></tr><tr><td>b3</td><td class="num">2</td><td class="num">2</td><td class="num">4</td></tr>  <tr><th>total</th><th class="num">6</th><th class="num">6</th><th class="num">12</th></tr>
+</table></div>
+<details><summary>All 12 samples</summary>
+<div class="wrap"><table>
+  <tr><th>sample</th><th>file</th><th>batch</th><th>condition</th><th>control</th><th>donor</th><th class="num">events</th></tr>
+<tr><td>b1_unstim1</td><td class="small">b1_unstim1.fcs</td><td>b1</td><td>unstim</td><td>unstim1</td><td>D1</td><td class="num">4,000</td></tr><tr><td>b1_unstim2</td><td class="small">b1_unstim2.fcs</td><td>b1</td><td>unstim</td><td>unstim2</td><td>D1</td><td class="num">30,000</td></tr><tr><td>b1_stim1</td><td class="small">b1_stim1.fcs</td><td>b1</td><td>stim</td><td>stim1</td><td>D2</td><td class="num">30,000</td></tr><tr><td>b1_stim2</td><td class="small">b1_stim2.fcs</td><td>b1</td><td>stim</td><td>stim2</td><td>D2</td><td class="num">30,000</td></tr><tr><td>b2_unstim1</td><td class="small">b2_unstim1.fcs</td><td>b2</td><td>unstim</td><td>unstim1</td><td>D1</td><td class="num">30,000</td></tr><tr><td>b2_unstim2</td><td class="small">b2_unstim2.fcs</td><td>b2</td><td>unstim</td><td>unstim2</td><td>D1</td><td class="num">30,000</td></tr><tr><td>b2_stim1</td><td class="small">b2_stim1.fcs</td><td>b2</td><td>stim</td><td>stim1</td><td>D2</td><td class="num">30,000</td></tr><tr><td>b2_stim2</td><td class="small">b2_stim2.fcs</td><td>b2</td><td>stim</td><td>stim2</td><td>D2</td><td class="num">30,000</td></tr><tr><td>b3_unstim1</td><td class="small">b3_unstim1.fcs</td><td>b3</td><td>unstim</td><td>unstim1</td><td>D1</td><td class="num">30,000</td></tr><tr><td>b3_unstim2</td><td class="small">b3_unstim2.fcs</td><td>b3</td><td>unstim</td><td>unstim2</td><td>D1</td><td class="num">30,000</td></tr><tr><td>b3_stim1</td><td class="small">b3_stim1.fcs</td><td>b3</td><td>stim</td><td>stim1</td><td>D3</td><td class="num">30,000</td></tr><tr><td>b3_stim2</td><td class="small">b3_stim2.fcs</td><td>b3</td><td>stim</td><td>stim2</td><td>D3</td><td class="num">30,000</td></tr></table></div></details>
+<h3>Panel</h3>
+<p class="small muted">spectral cytometer (Aurora). Clustering markers define the populations; state markers are tested for differential expression within them.</p>
+<div class="wrap"><table>
+  <tr><th>marker</th><th>channel</th><th>clustering</th><th>state</th><th class="num">cofactor</th></tr>
+<tr><td><strong>CD3</strong></td><td class="small">CH0-A</td><td><span class="tag">clustering</span></td><td></td><td class="num">6000</td></tr><tr><td><strong>CD4</strong></td><td class="small">CH1-A</td><td><span class="tag">clustering</span></td><td></td><td class="num">6000</td></tr><tr><td><strong>CD8</strong></td><td class="small">CH2-A</td><td><span class="tag">clustering</span></td><td></td><td class="num">6000</td></tr><tr><td><strong>CD56</strong></td><td class="small">CH3-A</td><td><span class="tag">clustering</span></td><td></td><td class="num">6000</td></tr><tr><td><strong>CD25</strong></td><td class="small">CH4-A</td><td></td><td><span class="tag">state</span></td><td class="num">6000</td></tr><tr><td><strong>FOXP3</strong></td><td class="small">CH5-A</td><td><span class="tag">clustering</span></td><td></td><td class="num">6000</td></tr><tr><td><strong>GZMB</strong></td><td class="small">CH6-A</td><td></td><td><span class="tag">state</span></td><td class="num">6000</td></tr></table></div>
+<p class="small muted">Also kept, not transformed: FSC-A.</p><h3>Dropped channels</h3>
+<table><tr><th>channel</th><th>marker</th><th>reason</th></tr>
+<tr><td>CH9-A</td><td>CD28</td><td>missing in 4 of 12 samples</td></tr></table>
+
+<h2 id="qc">Quality control</h2>
+<ul class="obs"><li>PeacoQC removed a median 2.2% of events per sample (range 0.5–35.0%, most in b2_stim2).</li><li>b2 (median 13.0%) lost more events to QC than the other batches (overall median 2.2%), so the instability is a property of that run rather than of single files.</li><li>1 file(s) flagged for losing more than 30% of events: b2_stim2. Flagged files were still passed on; their PeacoQC plots are below.</li><li>Cleanet called a median 1.81% of events doublets (range 0.57–2.88%, most in b1_unstim2).</li></ul>
+<div class="caveats"><strong>Keep in mind</strong><ul><li>PeacoQC note on 1 sample(s): “There are not enough bins for a robust isolation tree analysis.”</li></ul></div>
+<figure><img src="figures/qc_removed.png" alt="Percentage of events removed per sample"><figcaption>Events removed per sample; ▲ red = flagged by PeacoQC.</figcaption></figure><details><summary>Events per sample</summary>
+<div class="wrap"><table>
+  <tr><th>sample</th><th>batch</th><th>condition</th><th class="num">acquired</th>
+<th class="num">after PeacoQC</th><th class="num">removed</th><th></th><th class="num">doublets</th><th class="num">after Cleanet</th>    <th class="num">kept</th><th>notes</th></tr>
+<tr>
+    <td>b1_unstim1</td><td>b1</td><td>unstim</td>
+    <td class="num">4,000</td>
+<td class="num">3,920</td><td class="num">2.0%</td><td></td><td class="num">1.78%</td><td class="num">3,850</td>    <td class="num">96.2%</td>
+    <td class="small">There are not enough bins for a robust isolation tree analysis.</td>
+  </tr><tr>
+    <td>b1_unstim2</td><td>b1</td><td>unstim</td>
+    <td class="num">30,000</td>
+<td class="num">29,550</td><td class="num">1.5%</td><td></td><td class="num">2.88%</td><td class="num">28,700</td>    <td class="num">95.7%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b1_stim1</td><td>b1</td><td>stim</td>
+    <td class="num">30,000</td>
+<td class="num">29,100</td><td class="num">3.0%</td><td></td><td class="num">0.86%</td><td class="num">28,850</td>    <td class="num">96.2%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b1_stim2</td><td>b1</td><td>stim</td>
+    <td class="num">30,000</td>
+<td class="num">29,250</td><td class="num">2.5%</td><td></td><td class="num">2.87%</td><td class="num">28,410</td>    <td class="num">94.7%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b2_unstim1</td><td>b2</td><td>unstim</td>
+    <td class="num">30,000</td>
+<td class="num">26,400</td><td class="num">12.0%</td><td></td><td class="num">1.28%</td><td class="num">26,062</td>    <td class="num">86.9%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b2_unstim2</td><td>b2</td><td>unstim</td>
+    <td class="num">30,000</td>
+<td class="num">25,800</td><td class="num">14.0%</td><td></td><td class="num">1.56%</td><td class="num">25,398</td>    <td class="num">84.7%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b2_stim1</td><td>b2</td><td>stim</td>
+    <td class="num">30,000</td>
+<td class="num">26,700</td><td class="num">11.0%</td><td></td><td class="num">2.57%</td><td class="num">26,014</td>    <td class="num">86.7%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b2_stim2</td><td>b2</td><td>stim</td>
+    <td class="num">30,000</td>
+<td class="num">19,500</td><td class="num">35.0%</td><td><span class="flag">flagged</span></td><td class="num">1.52%</td><td class="num">19,203</td>    <td class="num">64.0%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b3_unstim1</td><td>b3</td><td>unstim</td>
+    <td class="num">30,000</td>
+<td class="num">29,700</td><td class="num">1.0%</td><td></td><td class="num">1.87%</td><td class="num">29,143</td>    <td class="num">97.1%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b3_unstim2</td><td>b3</td><td>unstim</td>
+    <td class="num">30,000</td>
+<td class="num">29,400</td><td class="num">2.0%</td><td></td><td class="num">0.57%</td><td class="num">29,233</td>    <td class="num">97.4%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b3_stim1</td><td>b3</td><td>stim</td>
+    <td class="num">30,000</td>
+<td class="num">29,550</td><td class="num">1.5%</td><td></td><td class="num">2.38%</td><td class="num">28,846</td>    <td class="num">96.2%</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>b3_stim2</td><td>b3</td><td>stim</td>
+    <td class="num">30,000</td>
+<td class="num">29,850</td><td class="num">0.5%</td><td></td><td class="num">1.84%</td><td class="num">29,299</td>    <td class="num">97.7%</td>
+    <td class="small"></td>
+  </tr></table></div></details>
+<h3>Flagged files</h3>
+<div class="grid"><figure><img src="figures/peacoqc_b2_stim2.png" alt="PeacoQC plot of b2_stim2"><figcaption>PeacoQC: b2_stim2</figcaption></figure></div>
+
+<h2 id="populations">Populations</h2>
+<ul class="obs"><li>5 metaclusters with 5 distinct labels over 333,984 cells. Largest: MC1 CD4 T (32%), MC2 CD8 T (28%) and MC4 CD4 T CD25+FOXP3+ (Treg or activated) (18%).</li></ul>
+<div class="caveats"><strong>Keep in mind</strong><ul><li>Labels are a transparent heuristic, not a classifier: each metacluster&#39;s median is scaled per marker across metaclusters and matched against a fixed rule table (flowsom&#39;s provenance.json lists the rules). Read them as names for the marker profiles in the heatmap, and check the profile before trusting one.</li><li>The panel has no CD127, so CD25+FOXP3+ CD4 T cells cannot be told apart from recently activated conventional CD4 T cells (which also up-regulate CD25 and can express FOXP3); hence &#39;Treg or activated&#39;.</li><li>MC5 T/B doublet-like (4.5% of cells) co-express lineage markers of two cell types: doublets that escaped the doublet step, or a rare true population.</li></ul></div>
+<figure><img src="figures/marker_heatmap.png" alt="Median marker expression per metacluster"><figcaption>Median arcsinh expression per metacluster, scaled 0–1 per marker across metaclusters (as the labelling rules see it). Bold markers were used for clustering; those right of the line were not.</figcaption></figure><details><summary>Labelled metaclusters (5)</summary>
+<div class="wrap"><table>
+  <tr><th>MC</th><th>label</th><th class="num">cells</th><th class="num">% of cells</th><th>marker profile</th></tr>
+<tr><td>1</td><td>CD4 T</td><td class="num">107,734</td><td class="num">32%</td><td class="small">CD3+ CD4+</td></tr><tr><td>2</td><td>CD8 T</td><td class="num">93,060</td><td class="num">28%</td><td class="small">CD3+ CD4+</td></tr><tr><td>4</td><td>CD4 T CD25+FOXP3+ (Treg or activated)</td><td class="num">59,634</td><td class="num">18%</td><td class="small">CD3+ CD4+</td></tr><tr><td>3</td><td>NK</td><td class="num">58,650</td><td class="num">18%</td><td class="small">CD3+ CD4+</td></tr><tr><td>5</td><td>T/B doublet-like</td><td class="num">14,906</td><td class="num">4.5%</td><td class="small">CD3+ CD4+</td></tr></table></div></details>
+<figure><img src="figures/composition.png" alt="Composition per sample"><figcaption>Share of each label in each sample (labels summed over their metaclusters; the seven largest shown, the rest as Other). Full table: tables/composition.csv.</figcaption></figure><details><summary>Mean composition per condition</summary>
+<table style="width:auto"><tr><th>label</th><th class="num">stim</th><th class="num">unstim</th></tr>
+<tr><td>CD4 T</td><td class="num">26%</td><td class="num">40%</td></tr><tr><td>CD8 T</td><td class="num">30%</td><td class="num">25%</td></tr><tr><td>CD4 T CD25+FOXP3+ (Treg or activated)</td><td class="num">16%</td><td class="num">20%</td></tr><tr><td>NK</td><td class="num">24%</td><td class="num">10%</td></tr><tr><td>T/B doublet-like</td><td class="num">4.0%</td><td class="num">5.0%</td></tr></table>
+</details>
+<h3>UMAP</h3>
+<p class="small muted">UMAP of 1,200 cells sampled evenly across samples, on the 1 clustering markers (n_neighbors 15, min_dist 0.3). Distances between distant islands in a UMAP are not meaningful; neighbourhoods are.</p><div class="grid"><figure><img src="figures/umap_by_condition.png" alt="UMAP by condition"><figcaption>UMAP by condition</figcaption></figure><figure><img src="figures/umap_by_label.png" alt="UMAP by label"><figcaption>UMAP by label</figcaption></figure></div>
+<details><summary>FlowSOM star tree</summary><figure><img src="figures/flowsom_star_tree.png" alt="FlowSOM star tree"></figure></details>
+<h2 id="da">Differential abundance</h2>
+<p class="small muted">diffcyt edgeR, batch as a blocking factor; significant at FDR &lt; 0.05.</p>
+<ul class="obs"><li>stim vs unstim: 3 of 5 tested metaclusters differ in abundance at FDR &lt; 0.05 (2 more abundant in stim, 1 less).</li><li>MC3 NK rose from 10% to 24% of cells (log2FC +1.26, FDR 5e-12; in all 3 batches).</li><li>MC2 CD8 T rose from 25% to 30% of cells (log2FC +0.28, FDR 0.006; in 1 of 3 batches).</li><li>MC1 CD4 T fell from 40% to 26% of cells (log2FC -0.64, FDR 0.03; in all 3 batches).</li></ul>
+<div class="caveats"><strong>Keep in mind</strong><ul><li>Not every batch goes the same way for MC2 CD8 T (1 of 3); the grey lines in the figure show which.</li><li>One batch carries most of the difference for MC2 CD8 T (b2, 80%); these results rest largely on that batch&#39;s samples.</li><li>The conditions come from different donors (unstim: donor D1 in every batch; stim: donor D2 (b1, b2) and donor D3 (b3)), so these differences mix the effect of the condition with differences between donors, and the samples in a condition are aliquots and batches of the same donor(s) rather than independent people. The FDRs are therefore much smaller than a study with one sample per donor would give.</li><li>Proportions are compositional: MC3 NK grew by 14 percentage points, which by itself lowers every other population&#39;s share. A fall in proportion is not necessarily a fall in absolute numbers.</li><li>The log2 fold change is the edgeR model coefficient (log2 fold change), adjusted for batch as a fixed effect; the percentages beside it are plain means of the per-sample proportions, so the two need not match exactly.</li></ul></div>
+<h3>stim vs unstim</h3>
+<div class="wrap"><table>
+  <tr><th>MC</th><th>label</th><th class="num">unstim</th><th class="num">stim</th><th class="num">log2FC</th><th class="num">FDR</th><th class="num">batches agreeing</th><th>notes</th></tr>
+<tr>
+    <td>3</td><td>NK</td>
+    <td class="num">10%</td><td class="num">24%</td>
+    <td class="num up">+1.26</td><td class="num">5e-12</td>
+    <td class="num">3/3</td>
+    <td class="small"></td>
+  </tr><tr>
+    <td>2</td><td>CD8 T</td>
+    <td class="num">25%</td><td class="num">30%</td>
+    <td class="num up">+0.28</td><td class="num">0.006</td>
+    <td class="num">1/3</td>
+    <td class="small"><span class="flag">same direction in 1 of 3 batches</span> <span class="flag">b2 carries 80% of the difference; without it the direction reverses</span> </td>
+  </tr><tr>
+    <td>1</td><td>CD4 T</td>
+    <td class="num">40%</td><td class="num">26%</td>
+    <td class="num down">-0.64</td><td class="num">0.03</td>
+    <td class="num">3/3</td>
+    <td class="small"></td>
+  </tr></table></div>
+<p class="small muted">Percentages: mean share of cells over the samples of each condition. Batches agreeing: batches whose stim − unstim difference has the same sign as the overall one.</p>
+<figure><img src="figures/da_1.png" alt="Proportions of significant metaclusters per sample"><figcaption>One point per sample; the bar is the condition mean; grey lines join each batch's means, so a line going the other way is a batch that disagrees.</figcaption></figure><details><summary>Volcano plot (diffcyt)</summary><figure><img src="figures/diffcyt_volcano.png" alt="Volcano plot"></figure></details>
+<h2 id="ds">Differential state</h2>
+<p class="small muted">diffcyt limma on per-sample median expression of the state markers within each metacluster; significant at FDR &lt; 0.05.</p>
+<ul class="obs"><li>stim vs unstim: 5 of 10 tested cluster × marker pairs differ at FDR &lt; 0.05 (5 higher in stim, 0 lower).</li><li>Largest shift: CD25 in MC4 CD4 T CD25+FOXP3+ (Treg or activated), 0.50 → 1.70 (median arcsinh; difference +1.20, FDR 2e-6).</li><li>Markers with the most significant clusters: CD25 (3) and GZMB (2).</li></ul>
+<div class="caveats"><strong>Keep in mind</strong><ul><li>As for abundance, the conditions come from different donors; a shift in expression mixes the condition with the donor.</li><li>diffcyt&#39;s logFC for state markers is a difference in median arcsinh-transformed expression (level minus reference), not a log fold change. At high intensity arcsinh behaves like a natural log, so a difference of 1 there is roughly a 2.7-fold change in signal; near zero it is much less.</li></ul></div>
+<h3>stim vs unstim: largest shifts among significant pairs</h3>
+<div class="wrap"><table>
+  <tr><th>marker</th><th>MC</th><th>label</th><th class="num">unstim</th><th class="num">stim</th><th class="num">difference</th><th class="num">FDR</th></tr>
+<tr><td><strong>CD25</strong></td><td>4</td><td>CD4 T CD25+FOXP3+ (Treg or activated)</td><td class="num">0.50</td><td class="num">1.70</td><td class="num up">+1.20</td><td class="num">2e-6</td></tr><tr><td><strong>CD25</strong></td><td>2</td><td>CD8 T</td><td class="num">0.50</td><td class="num">0.70</td><td class="num up">+0.20</td><td class="num">0.02</td></tr><tr><td><strong>GZMB</strong></td><td>2</td><td>CD8 T</td><td class="num">0.50</td><td class="num">0.70</td><td class="num up">+0.20</td><td class="num">0.02</td></tr><tr><td><strong>CD25</strong></td><td>1</td><td>CD4 T</td><td class="num">0.50</td><td class="num">0.60</td><td class="num up">+0.10</td><td class="num">0.02</td></tr><tr><td><strong>GZMB</strong></td><td>1</td><td>CD4 T</td><td class="num">0.50</td><td class="num">0.60</td><td class="num up">+0.10</td><td class="num">0.02</td></tr></table></div>
+<details><summary>Ranked by FDR instead</summary>
+<div class="wrap"><table>
+  <tr><th>marker</th><th>MC</th><th>label</th><th class="num">unstim</th><th class="num">stim</th><th class="num">difference</th><th class="num">FDR</th></tr>
+<tr><td><strong>CD25</strong></td><td>4</td><td>CD4 T CD25+FOXP3+ (Treg or activated)</td><td class="num">0.50</td><td class="num">1.70</td><td class="num up">+1.20</td><td class="num">2e-6</td></tr><tr><td><strong>CD25</strong></td><td>2</td><td>CD8 T</td><td class="num">0.50</td><td class="num">0.70</td><td class="num up">+0.20</td><td class="num">0.02</td></tr><tr><td><strong>GZMB</strong></td><td>2</td><td>CD8 T</td><td class="num">0.50</td><td class="num">0.70</td><td class="num up">+0.20</td><td class="num">0.02</td></tr><tr><td><strong>CD25</strong></td><td>1</td><td>CD4 T</td><td class="num">0.50</td><td class="num">0.60</td><td class="num up">+0.10</td><td class="num">0.02</td></tr><tr><td><strong>GZMB</strong></td><td>1</td><td>CD4 T</td><td class="num">0.50</td><td class="num">0.60</td><td class="num up">+0.10</td><td class="num">0.02</td></tr></table></div></details>
+<p class="small muted">Values: mean over samples of the per-sample median (arcsinh scale). Significant clusters per marker: CD25 3, GZMB 2.</p>
+<div class="grid"><figure><img src="figures/diffcyt_ds_logfc.png" alt="diffcyt differential state figure"><figcaption>From diffcyt: metacluster × marker differences, significant pairs ringed.</figcaption></figure></div>
+<h2 id="batch">Batch effects</h2>
+<p class="small muted">Earth mover's distance (EMD) between each batch's marker distributions and the pooled others, from batch-assess; 0 = identical distributions. One assessment per data version: raw, cytonorm, cycombine.</p><ul class="obs"><li>Before correction (raw): median EMD 0.150 (reference comparison); flagged batches: b1.</li><li>The most distinct batch before correction is b1 (score 0.390; 7 flagged markers, including CD3, CD4, CD8, CD56, CD25 and FOXP3).</li><li>After cytonorm: median EMD 0.045, 70% lower than raw; batch-vs-batch median 0.150 → 0.045 (70% lower).</li><li>b1 remains the most distinct batch after cytonorm (score 0.117, other batches 0.039–0.039).</li><li>After cycombine: median EMD 0.075, 50% lower than raw; batch-vs-batch median 0.150 → 0.075 (50% lower).</li><li>b1 remains the most distinct batch after cycombine (score 0.195, other batches 0.065–0.065).</li><li>Batch vs batch within stim samples (donor changes with batch): median EMD 0.150 (raw) → 0.045 (cytonorm), 0.075 (cycombine); lowest after cytonorm.</li><li>Batch vs batch within unstim samples (one donor in every batch): median EMD 0.150 (raw) → 0.045 (cytonorm), 0.075 (cycombine); lowest after cytonorm.</li><li>On these numbers cytonorm brought the batches closest together (70% lower median EMD than raw, and also in the batch-vs-batch comparison).</li><li>Markers flagged in at least one batch after every correction: CD25, CD3, CD4, CD56, CD8, FOXP3 and GZMB.</li><li>The unstim samples are the same donor in every batch, so differences between batches there are technical; the reference samples (unstim1) are among them, which makes the reference comparison a clean measure of the batch effect.</li></ul>
+<div class="caveats"><strong>Keep in mind</strong><ul><li>Flags are relative to each run&#39;s own spread (median + k·MAD across batches, with a floor), so a batch that is still flagged after correction stands out among the corrected batches; it need not have a large shift. Compare the EMD values, which are on one scale in the figure below.</li><li>CytoNorm learns its correction from the reference (control) samples of each batch (unstim1); the reference comparison measures those same samples, so it shows how well the model fits its training data. The batch-vs-batch comparison (all samples within a condition) and CytoNorm&#39;s held-out replicates (below, when present) are the fairer checks.</li><li>cyCombine&#39;s output is a subsample (up to 50,000 cells per sample), so its assessment covers fewer cells than the others.</li><li>cyCombine was given the &#39;condition&#39; column as a covariate, so differences between conditions were protected from the correction.</li><li>In the batch-vs-batch comparison the stim samples change donor with the batch (D2 in b1, b2 and D3 in b3), so part of their EMD is a donor difference that no batch correction should remove.</li></ul></div>
+<h3>Before and after correction</h3>
+<div class="wrap"><table>
+  <tr><th>data</th><th class="num">median EMD, reference</th><th class="num">flagged</th><th class="num">median EMD, batch vs batch</th><th class="num">flagged</th><th>flagged batches</th></tr>
+<tr><td><strong>raw</strong></td>
+    <td class="num">0.150</td><td class="num">7</td>
+    <td class="num">0.150</td><td class="num">0</td>
+    <td><span class="flag">b1</span> </td></tr><tr><td><strong>cytonorm</strong> <span class="tag">lowest</span></td>
+    <td class="num">0.045</td><td class="num">7</td>
+    <td class="num">0.045</td><td class="num">0</td>
+    <td><span class="flag">b1</span> </td></tr><tr><td><strong>cycombine</strong></td>
+    <td class="num">0.075</td><td class="num">7</td>
+    <td class="num">0.075</td><td class="num">0</td>
+    <td><span class="flag">b1</span> </td></tr></table></div>
+<p class="small muted">Reference: each batch's reference sample (control = unstim1) against the pooled reference samples. Batch vs batch: each batch against the other batches within a condition. Flagged: batch × marker cells above that run's own threshold.</p>
+<table style="width:auto"><tr><th>batch vs batch, median EMD</th><th class="num">raw</th><th class="num">cytonorm</th><th class="num">cycombine</th></tr>
+<tr><td>within stim</td><td class="num">0.150</td><td class="num">0.045</td><td class="num">0.075</td></tr><tr><td>within unstim</td><td class="num">0.150</td><td class="num">0.045</td><td class="num">0.075</td></tr></table>
+<figure><img src="figures/batch_scores.png" alt="Per-batch scores per data version"><figcaption>Per-batch score (mean EMD over markers, reference comparison) for each data version, on one axis.</figcaption></figure><div class="wrap"><table>
+  <tr><th>batch</th><th class="num">raw</th><th class="num">cytonorm</th><th class="num">cycombine</th><th>flagged markers (cycombine)</th></tr>
+<tr><td>b1</td><td class="num">0.390 <span class="flag">flagged</span></td><td class="num">0.117 <span class="flag">flagged</span></td><td class="num">0.195 <span class="flag">flagged</span></td><td class="small">CD3, CD4, CD8, CD56, CD25, FOXP3, GZMB</td></tr><tr><td>b2</td><td class="num">0.130</td><td class="num">0.039</td><td class="num">0.065</td><td class="small"></td></tr><tr><td>b3</td><td class="num">0.130</td><td class="num">0.039</td><td class="num">0.065</td><td class="small"></td></tr></table></div>
+<figure><img src="figures/batch_emd_heatmaps.png" alt="EMD per batch and marker for each data version"><figcaption>EMD per batch and marker (reference comparison), one colour scale for all data versions; red outline = flagged in that run. Markers ordered by the first version's mean EMD.</figcaption></figure><h3>cycombine: method diagnostics</h3>
+<ul class="obs"><li>cyCombine&#39;s own evaluation: EMD reduction 0.70 (1 = all batch distance removed, within re-clustered cell populations), MAD score 0.020 (small = within-batch spread, i.e. biology, kept).</li></ul><details><summary>Per marker</summary>
+<table style="width:auto"><tr><th>marker</th><th class="num">EMD before</th><th class="num">EMD after</th><th class="num">reduction</th></tr>
+<tr><td>CD3</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr><tr><td>CD4</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr><tr><td>CD8</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr><tr><td>CD56</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr><tr><td>CD25</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr><tr><td>FOXP3</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr><tr><td>GZMB</td><td class="num">2.000</td><td class="num">0.600</td><td class="num">70%</td></tr></table>
+</details>
+<h3>cytonorm: method diagnostics</h3>
+<ul class="obs"><li>Spread across batches after CytoNorm: its training reference(s) unstim1 60% lower; samples it never saw unstim2 30% lower.</li><li>Metacluster CVs across batches are at most 0.80 (below the ~1.5 warning level).</li></ul><table style="width:auto"><tr><th>replicate</th><th>role</th><th class="num">spread before</th><th class="num">after</th><th class="num">reduction</th></tr>
+<tr><td>unstim1</td><td>training</td><td class="num">0.200</td><td class="num">0.080</td><td class="num">60%</td></tr><tr><td>unstim2</td><td>held-out</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr></table>
+<p class="small muted">Spread: SD across batches of the per-batch marker quantiles, mean over markers × quantiles. Training = the references CytoNorm learned from; held-out = samples present in several batches that it never saw.</p>
+<details><summary>Per marker</summary>
+<table style="width:auto"><tr><th>marker</th><th class="num">SD across batches before (unstim2)</th><th class="num">after</th><th class="num">reduction</th></tr>
+<tr><td>CD25</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr><tr><td>CD3</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr><tr><td>CD4</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr><tr><td>CD56</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr><tr><td>CD8</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr><tr><td>FOXP3</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr><tr><td>GZMB</td><td class="num">0.200</td><td class="num">0.140</td><td class="num">30%</td></tr></table>
+</details>
+
+<h2 id="methods">Methods &amp; citations</h2>
+<p class="small muted">From the provenance.json files among the inputs: each step's version, tool versions and parameters, and the papers it rests on.</p>
+<div class="card">
+  <h3 style="margin-top:0">FCS import, panel harmonisation, arcsinh transform <span class="muted small">processor-fcs-prep</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>SEED=42</code></dd><dt>provenance</dt><dd class="muted">metadata/provenance.json</dd>  </dl>
+  <ol class="small"><li>White S, Quinn J, Enzor J, et al. FlowKit: A Python Toolkit for Integrated Manual and Automated Cytometry Analysis Workflows. <em>Front Immunol</em> 2021;12:768541. <a href="https://doi.org/10.3389/fimmu.2021.768541">doi:10.3389/fimmu.2021.768541</a>, PMID 34804056.</li><li>Bendall SC, Simonds EF, Qiu P, et al. Single-cell mass cytometry of differential immune and drug responses across a human hematopoietic continuum. <em>Science</em> 2011;332(6030):687-696. <a href="https://doi.org/10.1126/science.1198704">doi:10.1126/science.1198704</a>, PMID 21551058.</li><li>Pedersen CB, Dam SH, Barnkob MB, et al. cyCombine allows for robust integration of single-cell cytometry datasets within and across technologies. <em>Nat Commun</em> 2022;13(1):1698. <a href="https://doi.org/10.1038/s41467-022-29383-5">doi:10.1038/s41467-022-29383-5</a>, PMID 35361793.</li><li>Nowicka M, Krieg C, Crowell HL, et al. CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets. <em>F1000Res</em> 2017;6:748. <a href="https://doi.org/10.12688/f1000research.11622.3">doi:10.12688/f1000research.11622.3</a>, PMID 28663787.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Signal-stability QC (PeacoQC) <span class="muted small">processor-peacoqc</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>MAX_REMOVED_PCT=30</code></dd><dt>provenance</dt><dd class="muted">qc/provenance.json</dd>  </dl>
+  <ol class="small"><li>Emmaneel A, Quintelier K, Sichien D, et al. PeacoQC: Peak-based selection of high quality cytometry data. <em>Cytometry A</em> 2022;101(4):325-338. <a href="https://doi.org/10.1002/cyto.a.24501">doi:10.1002/cyto.a.24501</a>, PMID 34549881.</li><li>Hahne F, LeMeur N, Brinkman RR, et al. flowCore: a Bioconductor package for high throughput flow cytometry. <em>BMC Bioinformatics</em> 2009;10:106. <a href="https://doi.org/10.1186/1471-2105-10-106">doi:10.1186/1471-2105-10-106</a>, PMID 19358741.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Doublet detection (Cleanet) <span class="muted small">processor-cleanet</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>SEED=42</code></dd><dt>provenance</dt><dd class="muted">doublets/provenance.json</dd>  </dl>
+  <ol class="small"><li>Ionita M, McKeague ML, Painter MM, et al. Cleanet: Robust Doublet Detection in Cytometry Data Based on Protein Expression Patterns. <em>Cytometry A</em> 2025;107(11):716-729. <a href="https://doi.org/10.1002/cyto.a.24961">doi:10.1002/cyto.a.24961</a>, PMID 41065042.</li><li>Hahne F, LeMeur N, Brinkman RR, et al. flowCore: a Bioconductor package for high throughput flow cytometry. <em>BMC Bioinformatics</em> 2009;10:106. <a href="https://doi.org/10.1186/1471-2105-10-106">doi:10.1186/1471-2105-10-106</a>, PMID 19358741.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Clustering (FlowSOM) and heuristic labels <span class="muted small">processor-flowsom</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>SEED=42</code></dd><dt>provenance</dt><dd class="muted">clusters/provenance.json</dd>  </dl>
+  <ol class="small"><li>Van Gassen S, Callebaut B, Van Helden MJ, et al. FlowSOM: Using self-organizing maps for visualization and interpretation of cytometry data. <em>Cytometry A</em> 2015;87(7):636-645. <a href="https://doi.org/10.1002/cyto.a.22625">doi:10.1002/cyto.a.22625</a>, PMID 25573116.</li><li>Quintelier K, Couckuyt A, Emmaneel A, Aerts J, Saeys Y, Van Gassen S Analyzing high-dimensional cytometry data using FlowSOM. <em>Nat Protoc</em> 2021;16(8):3775-3801. <a href="https://doi.org/10.1038/s41596-021-00550-0">doi:10.1038/s41596-021-00550-0</a>, PMID 34172973.</li><li>Wilkerson MD, Hayes DN ConsensusClusterPlus: a class discovery tool with confidence assessments and item tracking. <em>Bioinformatics</em> 2010;26(12):1572-1573. <a href="https://doi.org/10.1093/bioinformatics/btq170">doi:10.1093/bioinformatics/btq170</a>, PMID 20427518.</li><li>Hahne F, LeMeur N, Brinkman RR, et al. flowCore: a Bioconductor package for high throughput flow cytometry. <em>BMC Bioinformatics</em> 2009;10:106. <a href="https://doi.org/10.1186/1471-2105-10-106">doi:10.1186/1471-2105-10-106</a>, PMID 19358741.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">UMAP embedding <span class="muted small">processor-cytometry-umap</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>N_NEIGHBORS=15, MIN_DIST=0.3, MARKERS_used=[&#34;CD3&#34;]</code></dd><dt>provenance</dt><dd class="muted">embedding/provenance.json</dd>  </dl>
+  <ol class="small"><li>Becht E, McInnes L, Healy J, et al. Dimensionality reduction for visualizing single-cell data using UMAP. <em>Nat Biotechnol</em> 2019;37(1):38-44. <a href="https://doi.org/10.1038/nbt.4314">doi:10.1038/nbt.4314</a>, PMID 30531897.</li><li>McInnes L, Healy J, Melville J UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction. <em>arXiv:1802.03426</em> 2018. <a href="https://doi.org/10.48550/arXiv.1802.03426">doi:10.48550/arXiv.1802.03426</a>.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Differential abundance and state (diffcyt) <span class="muted small">processor-diffcyt</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>SEED=42</code></dd><dt>provenance</dt><dd class="muted">da/provenance.json, ds/provenance.json</dd>  </dl>
+  <ol class="small"><li>Weber LM, Nowicka M, Soneson C, Robinson MD diffcyt: Differential discovery in high-dimensional cytometry via high-resolution clustering. <em>Commun Biol</em> 2019;2:183. <a href="https://doi.org/10.1038/s42003-019-0415-5">doi:10.1038/s42003-019-0415-5</a>, PMID 31098416.</li><li>Nowicka M, Krieg C, Crowell HL, et al. CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets. <em>F1000Res</em> 2017;6:748. <a href="https://doi.org/10.12688/f1000research.11622.3">doi:10.12688/f1000research.11622.3</a>, PMID 28663787.</li><li>Robinson MD, McCarthy DJ, Smyth GK edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. <em>Bioinformatics</em> 2010;26(1):139-140. <a href="https://doi.org/10.1093/bioinformatics/btp616">doi:10.1093/bioinformatics/btp616</a>, PMID 19910308.</li><li>McCarthy DJ, Chen Y, Smyth GK Differential expression analysis of multifactor RNA-Seq experiments with respect to biological variation. <em>Nucleic Acids Res</em> 2012;40(10):4288-4297. <a href="https://doi.org/10.1093/nar/gks042">doi:10.1093/nar/gks042</a>, PMID 22287627.</li><li>Ritchie ME, Phipson B, Wu D, et al. limma powers differential expression analyses for RNA-sequencing and microarray studies. <em>Nucleic Acids Res</em> 2015;43(7):e47. <a href="https://doi.org/10.1093/nar/gkv007">doi:10.1093/nar/gkv007</a>, PMID 25605792.</li><li>Law CW, Chen Y, Shi W, Smyth GK voom: Precision weights unlock linear model analysis tools for RNA-seq read counts. <em>Genome Biol</em> 2014;15(2):R29. <a href="https://doi.org/10.1186/gb-2014-15-2-r29">doi:10.1186/gb-2014-15-2-r29</a>, PMID 24485249.</li><li>Bates D, Mächler M, Bolker B, Walker S Fitting Linear Mixed-Effects Models Using lme4. <em>J Stat Softw</em> 2015;67(1). <a href="https://doi.org/10.18637/jss.v067.i01">doi:10.18637/jss.v067.i01</a>.</li><li>Hothorn T, Bretz F, Westfall P Simultaneous inference in general parametric models. <em>Biom J</em> 2008;50(3):346-363. <a href="https://doi.org/10.1002/bimj.200810425">doi:10.1002/bimj.200810425</a>, PMID 18481363.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Batch normalisation (CytoNorm) <span class="muted small">processor-cytonorm</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>MODE=controls, SEED=42</code></dd><dt>provenance</dt><dd class="muted">normalization/cytonorm/provenance.json</dd>  </dl>
+  <ol class="small"><li>Van Gassen S, Gaudilliere B, Angst MS, Saeys Y, Aghaeepour N CytoNorm: A Normalization Algorithm for Cytometry Data. <em>Cytometry A</em> 2020;97(3):268-278. <a href="https://doi.org/10.1002/cyto.a.23904">doi:10.1002/cyto.a.23904</a>, PMID 31633883.</li><li>Quintelier KLA, Willemsen M, Bosteels V, Aerts JGJV, Saeys Y, Van Gassen S CytoNorm 2.0: A flexible normalization framework for cytometry data without requiring dedicated controls. <em>Cytometry A</em> 2025;107(2):69-87. <a href="https://doi.org/10.1002/cyto.a.24910">doi:10.1002/cyto.a.24910</a>, PMID 39871681.</li><li>Van Gassen S, Callebaut B, Van Helden MJ, et al. FlowSOM: Using self-organizing maps for visualization and interpretation of cytometry data. <em>Cytometry A</em> 2015;87(7):636-645. <a href="https://doi.org/10.1002/cyto.a.22625">doi:10.1002/cyto.a.22625</a>, PMID 25573116.</li><li>Hahne F, LeMeur N, Brinkman RR, et al. flowCore: a Bioconductor package for high throughput flow cytometry. <em>BMC Bioinformatics</em> 2009;10:106. <a href="https://doi.org/10.1186/1471-2105-10-106">doi:10.1186/1471-2105-10-106</a>, PMID 19358741.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Batch correction (cyCombine) <span class="muted small">processor-cycombine</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>COVARIATE_COLUMN=condition, MAX_CELLS_PER_SAMPLE=50000</code></dd><dt>provenance</dt><dd class="muted">normalization/cycombine/provenance.json</dd>  </dl>
+  <ol class="small"><li>Pedersen CB, Dam SH, Barnkob MB, et al. cyCombine allows for robust integration of single-cell cytometry datasets within and across technologies. <em>Nat Commun</em> 2022;13(1):1698. <a href="https://doi.org/10.1038/s41467-022-29383-5">doi:10.1038/s41467-022-29383-5</a>, PMID 35361793.</li><li>Johnson WE, Li C, Rabinovic A Adjusting batch effects in microarray expression data using empirical Bayes methods. <em>Biostatistics</em> 2007;8(1):118-127. <a href="https://doi.org/10.1093/biostatistics/kxj037">doi:10.1093/biostatistics/kxj037</a>, PMID 16632515.</li><li>Leek JT, Johnson WE, Parker HS, Jaffe AE, Storey JD The sva package for removing batch effects and other unwanted variation in high-throughput experiments. <em>Bioinformatics</em> 2012;28(6):882-883. <a href="https://doi.org/10.1093/bioinformatics/bts034">doi:10.1093/bioinformatics/bts034</a>, PMID 22257669.</li><li>Wehrens R, Kruisselbrink J Flexible Self-Organizing Maps in kohonen 3.0. <em>J Stat Softw</em> 2018;87(7). <a href="https://doi.org/10.18637/jss.v087.i07">doi:10.18637/jss.v087.i07</a>.</li><li>Hahne F, LeMeur N, Brinkman RR, et al. flowCore: a Bioconductor package for high throughput flow cytometry. <em>BMC Bioinformatics</em> 2009;10:106. <a href="https://doi.org/10.1186/1471-2105-10-106">doi:10.1186/1471-2105-10-106</a>, PMID 19358741.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Batch-effect assessment (EMD) <span class="muted small">processor-cytometry-batch-assess</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>LABEL=cycombine</code></dd><dt>provenance</dt><dd class="muted">assessment/cycombine/provenance.json</dd>  </dl>
+<hr style="border:0;border-top:1px dashed #e1e0d9">  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>LABEL=cytonorm</code></dd><dt>provenance</dt><dd class="muted">assessment/cytonorm/provenance.json</dd>  </dl>
+<hr style="border:0;border-top:1px dashed #e1e0d9">  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>R 4.5.0</dd><dt>parameters</dt><dd><code>LABEL=raw</code></dd><dt>provenance</dt><dd class="muted">assessment/raw/provenance.json</dd>  </dl>
+  <ol class="small"><li>Orlova DY, Zimmerman N, Meehan S, et al. Earth Mover&#39;s Distance (EMD): A True Metric for Comparing Biomarker Expression Levels in Cell Populations. <em>PLoS One</em> 2016;11(3):e0151859. <a href="https://doi.org/10.1371/journal.pone.0151859">doi:10.1371/journal.pone.0151859</a>, PMID 27008164.</li><li>Pedersen CB, Dam SH, Barnkob MB, et al. cyCombine allows for robust integration of single-cell cytometry datasets within and across technologies. <em>Nat Commun</em> 2022;13(1):1698. <a href="https://doi.org/10.1038/s41467-022-29383-5">doi:10.1038/s41467-022-29383-5</a>, PMID 35361793.</li><li>Eswar S, Koenig ZT, Tursi AR, Cobeña-Reyes J, Tilburgs T, Andorf S CytoBatchFlagR: A Comprehensive Framework to Objectively Assess High-Parameter Cytometry Data for Batch Effects. <em>Cytometry A</em> 2026;109(4):241-256. <a href="https://doi.org/10.1002/cyto.a.70024">doi:10.1002/cyto.a.70024</a>, PMID 41968341.</li><li>Rubner Y, Tomasi C, Guibas LJ The Earth Mover&#39;s Distance as a Metric for Image Retrieval. <em>Int J Comput Vis</em> 2000;40(2):99-121. <a href="https://doi.org/10.1023/A:1026543900054">doi:10.1023/A:1026543900054</a>.</li><li>Virtanen P, Gommers R, Oliphant TE, et al. SciPy 1.0: fundamental algorithms for scientific computing in Python. <em>Nat Methods</em> 2020;17(3):261-272. <a href="https://doi.org/10.1038/s41592-019-0686-2">doi:10.1038/s41592-019-0686-2</a>, PMID 32015543.</li></ol>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">This report <span class="muted small">processor-cytometry-report</span></h3>
+  <dl class="kv small">
+    <dt>version</dt><dd>0.1.0</dd>
+<dt>tools</dt><dd>python 3.12, pandas x, numpy x, matplotlib x, jinja2 x</dd><dt>parameters</dt><dd><code>REPORT_TITLE=Immune Cytometry Report, FDR=</code></dd>  </dl>
+  <ol class="small"><li>Nowicka M, Krieg C, Crowell HL, et al. CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets. <em>F1000Res</em> 2017;6:748. <a href="https://doi.org/10.12688/f1000research.11622.3">doi:10.12688/f1000research.11622.3</a>, PMID 28663787.</li><li>Liechti T, Weber LM, Ashhurst TM, et al. An updated guide for the perplexed: cytometry in the high-dimensional era. <em>Nat Immunol</em> 2021;22(10):1190-1197. <a href="https://doi.org/10.1038/s41590-021-01006-z">doi:10.1038/s41590-021-01006-z</a>, PMID 34489590.</li><li>Hunter JD Matplotlib: A 2D Graphics Environment. <em>Comput Sci Eng</em> 2007;9(3):90-95. <a href="https://doi.org/10.1109/MCSE.2007.55">doi:10.1109/MCSE.2007.55</a>.</li></ol>
+</div>
+
+<h2 id="data">Input data</h2>
+<p>12 FCS file(s), sample sheet <code>samples.csv</code>.</p>
+<details><summary>File names</summary><p class="small">b1_stim1.fcs, b1_stim2.fcs, b1_unstim1.fcs, b1_unstim2.fcs, b2_stim1.fcs, b2_stim2.fcs, b2_unstim1.fcs, b2_unstim2.fcs, b3_stim1.fcs, b3_stim2.fcs, b3_unstim1.fcs, b3_unstim2.fcs</p></details>
+
+<footer>
+  Generated 2026-01-02T03:04:05+00:00 by processor-cytometry-report 0.1.0 (pandas x, matplotlib x).
+  Observations are drawn from the upstream outputs and describe the data; they are not clinical findings.
+</footer>
+</main>
+</body>
+</html>
