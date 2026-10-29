@@ -77,21 +77,6 @@ DEMO_DATASET = {
 }
 
 
-def demo_donor(file_name: str) -> str | None:
-    """The donor of a demo file, from its $TUBENAME keyword (read from the 24 files once and recorded here):
-    the unstimulated aliquots tcu1 ('181C') and tcu2 ('181C 2') are one donor in every batch; the stimulated
-    tcs3/tcs4 ('<donor> d7 stim [2]') are donor 199C in batches 01 and 05 and donor 198C in 02, 03, 04, 06."""
-    import re
-
-    m = re.match(r"^B0([1-6])_(tc[su][1-4])_CD45\+CD14-\.fcs$", file_name)
-    if not m:
-        return None
-    batch, tube = int(m.group(1)), m.group(2)
-    if tube.startswith("tcu"):
-        return "181C"
-    return "199C" if batch in (1, 5) else "198C"
-
-
 def demo_file_names() -> set[str]:
     """The 24 FCS file names of the demo dataset (B01-B06 x tcs3, tcs4, tcu1, tcu2)."""
     return {f"B0{b}_{c}_CD45+CD14-.fcs" for b in range(1, 7) for c in ("tcs3", "tcs4", "tcu1", "tcu2")}

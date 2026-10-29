@@ -23,7 +23,7 @@ correction scored on its own training samples). It does not give advice.
 
 | Section | Shown when | What it says |
 |---|---|---|
-| Overview | `metadata` | samples per batch × condition (and whether they are confounded), events per sample, donors (a `donor`/`subject`/`patient` column of `samples.csv`, or for the demo data the files' `$TUBENAME`), panel with clustering/state flags and cofactors, dropped channels with reasons |
+| Overview | `metadata` | samples per batch × condition (and whether they are confounded), events per sample, donors (a `donor`/`subject`/`patient` column of `samples.csv`, carried through by fcs-prep from the sample sheet), panel with clustering/state flags and cofactors, dropped channels with reasons |
 | Quality control | `qc` and/or `doublets` | events in/removed per sample (PeacoQC, Cleanet), flagged files with their PeacoQC plots, batches that lost more than the others, PeacoQC notes |
 | Populations | `clusters` (+ `embedding`) | labelled metaclusters with their marker profiles, a median-expression heatmap scaled per marker, composition per sample (stacked bars by condition) and per condition, UMAP figures; caveats on heuristic labels, labels that span several metaclusters, a Treg label without CD127 in the panel, doublet-like clusters |
 | Differential abundance | `da` (+ `clusters`, `metadata`) | significant metaclusters with mean % per condition, log2FC and FDR; for each, how many batches go the same way and whether one batch carries most of the difference; a points-per-sample figure with batch means joined; compositional caveat |
@@ -98,7 +98,7 @@ workflow-immune-cytometry: prep, peacoqc, flowsom, umap, diffcyt with
 `REFERENCE_LEVEL=unstimulated`, batch-assess raw/cytonorm/cycombine, cytonorm and cycombine qc;
 no cleanet output yet). Some of what the page says:
 
-- Donors: unstimulated tcu1/tcu2 are one donor (181C) in every batch; the stimulated samples are
+- Donors: unstimulated tcu1/tcu2 are one donor (181C) in every batch (the sample sheet's `donor` column); the stimulated samples are
   donor 198C (batches 02, 03, 04, 06) or 199C (01, 05). So stimulation and donor coincide, and the
   DA/DS FDRs measure reproducibility across batches and aliquots, not variation between people.
 - QC: PeacoQC removed a median 1.7% per sample (0–18.9%); batch03 lost more than the others.
@@ -142,8 +142,8 @@ the page, `UPDATE_SNAPSHOTS=1 make test` rewrites it (look at the diff first).
 - Labels and caveats are only as good as the upstream outputs: the report re-derives proportions
   and batch consistency from `counts.csv`, but takes test results (logFC, FDR) from diffcyt.
 - Donor confounding is detected from a donor-like column of `samples.csv` (`donor`, `subject`,
-  `patient`, …) or, for the demo dataset only, from its known `$TUBENAME`s; without either, the
-  report cannot see it.
+  `patient`, …), which fcs-prep carries through from the sample sheet; without one the report
+  cannot see it.
 - The batch comparison relies on batch-assess runs over the same samples and reference; runs with
   different references are flagged as not directly comparable.
 - Figures are static PNGs (no hover); every figure has a table or a CSV beside it.

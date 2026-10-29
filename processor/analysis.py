@@ -112,24 +112,16 @@ DONOR_COLUMNS = ("donor", "donor_id", "subject", "subject_id", "patient", "patie
 
 
 def donor_design(inp: Inputs) -> dict[str, Any] | None:
-    """Which donor each sample comes from: a donor column of samples.csv, else (for the demo dataset) the donors
-    recorded from its $TUBENAME keywords. Returns per condition the donors and the batches they sit in."""
-    from processor import citations as C
-
+    """Which donor each sample comes from, from a donor-like column of samples.csv (donor, subject, patient, ...).
+    Returns per condition the donors and the batches they sit in; None without such a column."""
     s = inp.samples
     if s is None or "condition" not in s:
         return None
     col = next((c for c in s.columns if c.lower() in DONOR_COLUMNS), None)
-    if col:
-        donor = s[col].astype(str)
-        source = f"the '{col}' column of samples.csv"
-    elif "file" in s:
-        donor = s["file"].astype(str).map(C.demo_donor)
-        if donor.isna().any():
-            return None
-        source = "the demo files' $TUBENAME keywords, as recorded in this app"
-    else:
+    if not col or s[col].isna().all():
         return None
+    donor = s[col].astype(str)
+    source = f"the '{col}' column of samples.csv"
     df = pd.DataFrame({"condition": s["condition"].astype(str), "donor": donor,
                        "batch": s["batch"].astype(str) if "batch" in s else "NA"})
     per = {}
