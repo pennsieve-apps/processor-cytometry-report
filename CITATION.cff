@@ -1,5 +1,6 @@
 cff-version: "1.2.0"
-message: If you use this app, please cite it and the works it builds on, listed under references.
+message: >-
+  If you use this app, please cite the work it implements (preferred-citation), this release, and Pennsieve (RRID:SCR_021677); the other works it builds on are listed under references.
 type: software
 title: Immune Cytometry Report
 abstract: The last step of both immune cytometry workflows. Reads whatever upstream outputs it is given
@@ -15,6 +16,34 @@ keywords:
 - report
 - differential-abundance
 - batch-effects
+# The work this app implements; the release report's "How to cite" puts it first.
+preferred-citation:
+  type: article
+  title: 'CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets'
+  authors:
+  - family-names: Nowicka
+    given-names: Malgorzata
+  - family-names: Krieg
+    given-names: Carsten
+  - family-names: Crowell
+    given-names: Helena L.
+  - family-names: Weber
+    given-names: Lukas M.
+  - family-names: Hartmann
+    given-names: Felix J.
+  - family-names: Guglietta
+    given-names: Silvia
+  - family-names: Becher
+    given-names: Burkhard
+  - family-names: Levesque
+    given-names: Mitchell P.
+  - family-names: Robinson
+    given-names: Mark D.
+  year: 2017
+  journal: F1000Research
+  volume: 6
+  start: '748'
+  doi: 10.12688/f1000research.11622.3
 references:
 - type: article
   title: 'CyTOF workflow: differential discovery in high-throughput high-dimensional cytometry datasets'
